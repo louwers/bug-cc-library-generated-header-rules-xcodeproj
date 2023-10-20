@@ -1,0 +1,52 @@
+load(
+    "@rules_xcodeproj//xcodeproj:defs.bzl",
+    "top_level_target",
+    "xcodeproj",
+)
+
+genrule(
+  name = "hello_header",
+  srcs = [
+    "gen_header.sh"
+  ],
+  cmd = """
+    $(location gen_header.sh) > $@
+ """,
+  outs = [
+    "include/hello.hpp"
+  ]
+)
+
+cc_library(
+  name = "lib",
+  srcs = [
+    "src/hello.cpp"
+  ],
+  hdrs = [
+    ":hello_header"
+  ],
+  includes = [
+    "include"
+  ],
+  visibility = ["//visibility:public"],
+) 
+
+cc_binary(
+  name = "main",
+  srcs = [
+    "src/main.cc"
+  ],
+  deps = [
+    ":lib"
+  ],
+  visibility = ["//visibility:public"],
+)
+
+xcodeproj(
+    name = "xcodeproj",
+    project_name = "Repro",
+    tags = ["manual"],
+    top_level_targets = [
+        ":main",
+    ],
+)
