@@ -3,6 +3,11 @@ load(
     "top_level_target",
     "xcodeproj",
 )
+load("@build_bazel_rules_apple//apple:ios.bzl", "ios_application")
+load(
+    "@build_bazel_rules_apple//apple:versioning.bzl",
+    "apple_bundle_version",
+)
 
 genrule(
   name = "hello_header",
@@ -42,11 +47,63 @@ cc_binary(
   visibility = ["//visibility:public"],
 )
 
+objc_library(
+  name="objcpp_lib",
+  srcs = [
+    "func.mm",
+  ],
+  hdrs = [
+        "func.h"
+  ],
+  includes = [
+    "."
+  ],
+  deps = [
+    ":lib"
+  ],
+  copts = ["-std=c++17"],
+)
+
+
+objc_library(
+  name="app_lib",
+  srcs = [
+    "AppDelegate.h",
+    "AppDelegate.m",
+    "main.m"
+  ],
+    data = [
+      "Main.storyboard",
+  ],
+  deps = [
+    "objcpp_lib"
+  ]
+)
+
+apple_bundle_version(
+    name = "HelloWorldVersion",
+    build_version = "1.0",
+)
+
+ios_application(
+    name = "App",
+    bundle_id = "com.example.app",
+    families = [
+        "iphone",
+        "ipad",
+    ],
+    infoplists = [":Info.plist"],
+    minimum_os_version = "15.0",
+    launch_storyboard = "Launch.storyboard",
+    deps = [":app_lib"],
+    version = ":HelloWorldVersion",
+)
+
 xcodeproj(
     name = "xcodeproj",
     project_name = "Repro",
     tags = ["manual"],
     top_level_targets = [
-        ":main",
+        ":App",
     ],
 )
